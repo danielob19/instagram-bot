@@ -16,6 +16,7 @@ def verify():
     """Verifica el Webhook de Facebook"""
     token_sent = request.args.get("hub.verify_token")
     challenge = request.args.get("hub.challenge")
+    
     if token_sent == VERIFY_TOKEN:
         return challenge
     return "Token inválido", 403
@@ -24,7 +25,8 @@ def verify():
 def receive_message():
     """Recibe mensajes desde Instagram"""
     data = request.get_json()
-    if "entry" in data:
+
+    if data and "entry" in data:
         for entry in data["entry"]:
             for messaging in entry.get("messaging", []):
                 if "message" in messaging:
@@ -47,21 +49,13 @@ def send_message(user_id, text):
         "message": {"text": text}
     }
     headers = {"Content-Type": "application/json"}
-    requests.post(url, data=json.dumps(payload), headers=headers)
+    
+    response = requests.post(url, data=json.dumps(payload), headers=headers)
+    
+    # Debugging
+    print(f"Mensaje enviado a {user_id}: {text}")
+    print(f"Respuesta de Facebook: {response.status_code} - {response.text}")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-
-# ----- Fin del archivo app.py -----
-
-# requirements.txt - Dependencias
-# Flask
-# requests
-# gunicorn
-
-# ----- Fin del archivo requirements.txt -----
-
-# Procfile - Configuración para Render
-# web: gunicorn app:app
-
-# ----- Fin del archivo Procfile -----
+    port = int(os.environ.get("PORT", 10000))  # Render usa un puerto dinámico
+    app.run(host="0.0.0.0", port=port)
